@@ -1,6 +1,6 @@
 # Mailbag
 
-**TODO: Add description**
+**A library for parsing maildir folders**
 
 ## Installation
 
@@ -17,3 +17,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
         def application do
           [applications: [:mailbag]]
         end
+
+## Usage
+
+You can use mailbag by
