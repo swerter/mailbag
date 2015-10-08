@@ -1,0 +1,2 @@
+defmodule Mailbag do
+end
