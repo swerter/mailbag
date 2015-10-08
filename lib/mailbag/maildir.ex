@@ -78,24 +78,60 @@ defmodule Mailbag.Maildir do
     end
     subject = extract_from_header(content_stream, "Subject")
     |> Mailbag.MimeMail.Words.word_decode
+    # If there is no date in the header
     date = extract_from_header(content_stream, "Date") |> date_cleansing
     date = case Timex.DateFormat.parse(date, "{RFC1123}") do
       {:ok, date} -> date
-      {_, date} -> raise "Could not parse date: #{extract_from_header(content_stream, "Date")}"
+      {_, date} -> Timex.DateFormat.parse("Mon, 1 Jan 1970 00:00:00 +0000", "{RFC1123}")
     end
-
     content_type = extract_from_header(content_stream, "Content-Type")
+
     %{id: email_id, from: from, from_email: from_email, subject: subject, date: date, content_type: content_type}
   end
 
 
-  defp date_cleansing(date) do
+  @doc """
+  Cleanes the date because there are some ugly formatted dates out there
+  """
+  def date_cleansing(date) do
+    date
+    |> date_cleansing_remove_trailing_timezone
+    |> date_cleansing_add_missing_weekday
+    |> date_cleansing_remove_double_spaces
+    |> date_cleansing_single_digits
+  end
+
+  defp date_cleansing_remove_trailing_timezone(date) do
     # remove '(CEST)' in "Mon, 5 Oct 2015 13:36:10 +0200 (CEST)"
     case Regex.run( ~r/(.*)\s(\(.*\))/, date) do
       [_, cleaned_date, _] -> cleaned_date
       nil -> date
     end
   end
+
+  defp date_cleansing_add_missing_weekday(date) do
+    # Add eg 'Mon, " to "5 Oct 2015 13:36:10 +0200"
+    if String.contains?(date, ",") do
+      date
+    else
+      "Mon, #{date}"
+    end
+  end
+
+  defp date_cleansing_remove_double_spaces(date) do
+    # Remove double spaces " to "5 Oct 2015 13:36:10 +0200"
+    if String.contains?(date, "  ") do
+      String.replace(date, "  ", " ")
+    else
+      date
+    end
+  end
+
+  defp date_cleansing_single_digits(date) do
+    # Remove single digits in hours " to "5 Oct 2015 3:36:10 +0200"
+    Regex.replace(~r/(.*)\D(\d:\d\d:\d\d)(.*)/, date, "\\g{1} 0\\g{2}\\g{3}")
+  end
+
 
   # Extracts the field "type" from the email header
   # Example extract_from_header(stream, "From") would return the email sender, eg. "Hans Huber <h.h@blue.com>"
