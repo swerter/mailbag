@@ -1,0 +1,2 @@
+# mailbag
+Maildir parsing library
