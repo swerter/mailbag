@@ -54,7 +54,8 @@ defmodule Mailbag.Email do
   end
 
   def extract_gmime_body(path) do
-    command = Path.dirname(__ENV__.file) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_body") |> Path.expand
+    command = Path.dirname(__ENV__.file) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
+    IO.puts command
     {email_txt, 1} = System.cmd command, [path]
     email_txt
   end
