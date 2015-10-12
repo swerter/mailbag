@@ -1,5 +1,8 @@
 # Copied from https://github.com/awetzel/mailibex
 defmodule Mailbag.MimeMail do
+#### Decode subject/from
+
+
   def ok_or({:ok,res},_), do: res
   def ok_or(_,default), do: default
 
@@ -11,6 +14,17 @@ defmodule Mailbag.MimeMail do
     |> Enum.filter(&String.printable?/1)
     |> Kernel.to_string
   end
+
+  def qp_to_binary(str), do:
+    (str |> String.rstrip |> String.rstrip(?=) |> qp_to_binary([]))
+  def qp_to_binary("=\r\n"<>rest,acc), do:
+    qp_to_binary(rest,acc)
+  def qp_to_binary(<<?=,x1,x2>><>rest,acc), do:
+    qp_to_binary(rest,[<<x1,x2>> |> String.upcase |> Base.decode16! | acc])
+  def qp_to_binary(<<c,rest::binary>>,acc), do:
+    qp_to_binary(rest,[c | acc])
+  def qp_to_binary("",acc), do:
+    (acc |> Enum.reverse |> IO.iodata_to_binary)
 end
 
 
@@ -24,10 +38,19 @@ defmodule Mailbag.MimeMail.Words do
       [enc,"Q",enc_str,"="] ->
         str = q_to_binary(enc_str,[])
          Mailbag.MimeMail.ok_or(Iconv.conv(str,enc,"utf8"), Mailbag.MimeMail.ensure_ascii(str))
+      [enc,"q",enc_str,"="] ->
+        str = q_to_binary(enc_str,[])
+         Mailbag.MimeMail.ok_or(Iconv.conv(str,enc,"utf8"), Mailbag.MimeMail.ensure_ascii(str))
       [enc,"B",enc_str,"="] ->
         str = Base.decode64(enc_str) |> Mailbag.MimeMail.ok_or(enc_str)
          Mailbag.MimeMail.ok_or(Iconv.conv(str,enc,"utf8"), Mailbag.MimeMail.ensure_ascii(str))
-      _ -> "#{str} "
+      [enc,"b",enc_str,"="] ->
+        str = Base.decode64(enc_str) |> Mailbag.MimeMail.ok_or(enc_str)
+         Mailbag.MimeMail.ok_or(Iconv.conv(str,enc,"utf8"), Mailbag.MimeMail.ensure_ascii(str))
+      ["utf-8","b",enc_str,""] ->
+        str = Base.decode64(enc_str) |> Mailbag.MimeMail.ok_or(enc_str)
+         Mailbag.MimeMail.ok_or(Iconv.conv(str,"utf8","utf8"), Mailbag.MimeMail.ensure_ascii(str))
+      x -> str
     end
   end
   def single_word_decode(str), do: "#{str} "

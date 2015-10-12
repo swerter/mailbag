@@ -45,21 +45,6 @@ defmodule Mailbag.Maildir do
   end
 
 
-  @doc """
-  Returns the content of a single email
-  """
-  def one(email, id, folder \\ "INBOX") do
-    mailbox_path = mailbox_path(email, folder)
-    path = mailbox_path |> Path.join("new") |> Path.join(id)
-    if File.exists?(path), do: email_path = path
-    path = mailbox_path |> Path.join("cur") |> Path.join(id)
-    if File.exists?(path), do: email_path = path
-    IO.inspect email_path
-    {:ok, content} = File.read(email_path)
-    IO.inspect content
-    content
-  end
-
 
   @doc """
   Extract information from the email header.
@@ -100,8 +85,9 @@ defmodule Mailbag.Maildir do
   end
 
 
+
   def extract_content_type_and_boundary(header) do
-    re = ~r/Content-[T|t]ype: .*\n(\s+.*\n)*/
+    re = ~r/Content-[T|t]ype: .*\n?(\s+.*\n)*/
     if is_nil(Regex.run(re, header)) do
       %{content_type: "", boundary: "", charset: ""}
     else
@@ -109,30 +95,44 @@ defmodule Mailbag.Maildir do
       charset = ""
       full_line = Regex.run(re, header) |> Enum.at(0)
 
-      if Regex.match?(re = ~r/Content-[T|t]ype: (.*;)\s*boundary=(.*)/, full_line) do
-        [_, content_type, boundary] = Regex.run(re, full_line)
-        boundary = String.replace(boundary, "\";", "")
-        boundary = String.replace(boundary, "\"", "")
-      end
-
-      if Regex.match?(re = ~r/Content-[T|t]ype: (.*);/, full_line) do
+      if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/|-]*);/, full_line) do
         [_, content_type] = Regex.run(re, full_line)
       end
 
-      if Regex.match?(re = ~r/Content-[T|t]ype: (.*); charset=(.*);/, full_line) do
-        [_, content_type, charset] = Regex.run(re, full_line)
-      end
+      additions = String.split(full_line, ";")
+      |> Enum.slice(1..-1)
+      |> Enum.reduce(%{}, fn(x, acc) ->
+        [_, key, val] = Regex.run(~r/(\w*)="?(.*)"?/, x)
+        res = case key do
+          "boundary" -> %{boundary: String.replace(val, "\"", "")}
+          "charset" ->  %{charset: String.replace(val, "\"", "")}
+            _ -> %{}
+        end
+        Map.merge(acc, res)
+      end)
 
-      if Regex.match?(re = ~r/Content-[T|t]ype: (.*); charset=(.*);.*/, full_line) do
-        [_, content_type, charset] = Regex.run(re, full_line)
-      end
-      %{content_type: content_type, boundary: boundary, charset: charset}
+
+      # if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/]*);\s*boundary="(.*)";?/, full_line) do
+      #   [_, content_type, boundary] = Regex.run(re, full_line)
+      #   boundary = String.replace(boundary, "\"", "")
+      # end
+
+      # if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/]*); charset=(.*);?/, full_line) do
+      #   [_, content_type, charset] = Regex.run(re, full_line)
+      # end
+
+      # if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/]*); charset=(.*);?.*/, full_line) do
+      #   [_, content_type, charset] = Regex.run(re, full_line)
+      # end
+      # charset = charset |> String.replace("\"", "")
+      # boundary = boundary |> String.replace(";", "")
+      Map.merge(%{content_type: content_type, charset: charset}, additions)
     end
   end
 
 
   def extract_content_transfer_encoding(header) do
-    re = Regex.run(~r/Content-[T|t]ransfer-[E|e]ncoding: .*\n(\s+.*\n)*/, header)
+    re = Regex.run(~r/Content-[T|t]ransfer-[E|e]ncoding:\s+([\w|-]*)/, header) |> Enum.at(1)
   end
 
 
@@ -151,36 +151,6 @@ defmodule Mailbag.Maildir do
     end
   end
 
-
-  def decode_email(path) do
-    email = File.read!(Path.expand(path))
-    decode_body_structure(%{raw: email})
-  end
-
-
-  def decode_body_structure(%{raw: string}, parent_boundary \\ "", parent_type \\ "") do
-    case extract_content_type_and_boundary(string) do
-      # multipart
-      %{content_type: "multipart/"<>part_type, boundary: boundary, charset: _} ->
-        splitted = String.split(string, ~r"\s*--#{boundary}\s*") |> Enum.slice(1..-2)
-        Enum.map(splitted, &(decode_body_structure(%{raw: &1}, boundary, part_type)))
-      # text part, eg plain/html
-      %{content_type: "text/"<>text_type, boundary: boundary, charset: charset} ->
-        res = string |> Iconv.conv(charset,"utf8")
-        |> Mailbag.MimeMail.ok_or(Mailbag.MimeMail.ensure_ascii(string))
-        |> Mailbag.MimeMail.ensure_utf8
-        Dict.put(%{}, String.to_atom(parent_type), %{boundary: parent_boundary, content_type: text_type})
-      # attachments
-      %{content_type: content_type, boundary: _, charset: _} ->
-        Dict.put(%{}, String.to_atom(parent_type), %{content_type: content_type, boundary: parent_boundary})
-    end
-  end
-  def decode_body_structure(%{body: _}=mail, _, _), do: mail
-
-
-  def extract_part(string, boundary) do
-    String.split(string, ~r"\s*--#{boundary}\s*") |> Enum.slice(1..-2)
-  end
 
 
   @doc """
