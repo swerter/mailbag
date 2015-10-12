@@ -41,7 +41,7 @@ defmodule Mailbag.Maildir do
     {:ok, current_emails} = File.ls(Path.join(maildir_path, "cur"))
 
     Enum.map(new_emails, fn(x) -> parse_email_header(maildir_path |> Path.join("new") |> Path.join(x)) end) ++
-      Enum.map(current_emails, fn(x) -> parse_email_header(Path.join(maildir_path |> Path.join("cur") |> Path.join(x))) end)
+      Enum.map(current_emails, fn(x) -> parse_email_header(maildir_path |> Path.join("cur") |> Path.join(x)) end)
   end
 
 
