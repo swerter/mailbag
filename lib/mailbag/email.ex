@@ -8,7 +8,6 @@ defmodule Mailbag.Email do
   Returns the content of a single email
   """
   def one(base_path, email_address, id, folder \\ "INBOX") do
-    mailbox_path = Mailbag.Maildir.mailbox_path(base_path, email_address, folder)
     email_path = Mailbag.Email.email_path(base_path, email_address, folder)
     email_text = extract_gmime_body(email_path)
     header = Mailbag.Maildir.parse_email_header(email_path)
