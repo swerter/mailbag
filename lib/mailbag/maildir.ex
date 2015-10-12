@@ -40,8 +40,8 @@ defmodule Mailbag.Maildir do
     {:ok, new_emails} = File.ls(Path.join(maildir_path, "new"))
     {:ok, current_emails} = File.ls(Path.join(maildir_path, "cur"))
 
-    Enum.map(new_emails, fn(x) -> parse_email_header(Path.join(maildir_path, "new"), x) end) ++
-      Enum.map(current_emails, fn(x) -> parse_email_header(Path.join(maildir_path, "cur"), x) end)
+    Enum.map(new_emails, fn(x) -> parse_email_header(maildir_path |> Path.join("new") |> Path.join(x)) end) ++
+      Enum.map(current_emails, fn(x) -> parse_email_header(Path.join(maildir_path |> Path.join("cur") |> Path.join(x))) end)
   end
 
 
@@ -51,10 +51,10 @@ defmodule Mailbag.Maildir do
   Uses streams to avoid having to read the whole email just to
   extract the header values.
   """
-  def parse_email_header(folder_path, email_id) do
-    email_file_path = Path.join(folder_path, email_id)
+  def parse_email_header(email_path) do
+    email_id = Path.basename(email_path)
 
-    content_stream = File.stream!(email_file_path)
+    content_stream = File.stream!(email_path)
     header = extract_header(content_stream)
     from = extract_from_header(content_stream, "From:")
     if is_nil(Regex.run(~r/.*<(.*)>/, from)) do

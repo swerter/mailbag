@@ -7,21 +7,42 @@ defmodule Mailbag.Email do
   @doc """
   Returns the content of a single email
   """
-  def one(base_path, id, email_address, folder \\ "INBOX") do
+  def one(base_path, email_address, id, folder \\ "INBOX") do
     mailbox_path = Mailbag.Maildir.mailbox_path(base_path, email_address, folder)
-    dir = "cur"
-    tmp_path = mailbox_path |> Path.join("new")
-    if File.exists?(tmp_path), do: folder_path = tmp_path; dir="new"
-    tmp_path = mailbox_path |> Path.join("cur")
-    if File.exists?(tmp_path), do: folder_path = tmp_path; dir="cur"
-    email_path = folder_path |> Path.join(id)
-    if File.exists?(email_path) do
-      email_text = extract_gmime_body(email_path)
-      header = Mailbag.Maildir.parse_email_header(folder_path, id)
-      {email_text, header, email_path, dir}
-    else
-      raise "Email path not found: #{email_path}"
-    end
+    email_path = Mailbag.Email.email_path(base_path, email_address, folder)
+    email_text = extract_gmime_body(email_path)
+    header = Mailbag.Maildir.parse_email_header(email_path)
+    {email_text, header, email_path}
+  end
+
+
+  @doc """
+  On a mailserver, the email is often stored as followes for
+  the user aaa@bbb.com
+  /bbb.com/aaa/{INBOX,Drafts,...}
+  email_path converts the email to such a path.
+  ## Example
+      iex> Mailbag.Email.email_path("./test/data", "aaa@test.com", "1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      "/x/bbb.com/aaa/INBOX/cur/1443716371_0.10854.brumbrum,U=609,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
+
+  """
+  def email_path(base_path, email, id, folder \\ "INBOX") do
+    [user_name, domain] = String.split(email, "@")
+
+    folder_path = base_path
+      |> Path.join(domain)
+      |> Path.join(user_name)
+      |> Path.join(folder)
+      |> Path.expand
+
+      if File.exists?(path = folder_path |> Path.join("cur") |> Path.join(id)) do
+        email_path = path
+      end
+
+      if File.exists?(path = folder_path |> Path.join("new") |> Path.join(id)) do
+        email_path = path
+      end
+      email_path
   end
 
 
