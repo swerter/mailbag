@@ -8,7 +8,7 @@ defmodule Mailbag.Email do
   Returns the content of a single email
   """
   def one(base_path, email_address, id, folder \\ "INBOX") do
-    email_path = Mailbag.Email.email_path(base_path, email_address, folder)
+    email_path = Mailbag.Email.email_path(base_path, email_address, id, folder)
     email_text = extract_gmime_body(email_path)
     header = Mailbag.Maildir.parse_email_header(email_path)
     {email_text, header, email_path}
@@ -29,19 +29,20 @@ defmodule Mailbag.Email do
     [user_name, domain] = String.split(email, "@")
 
     folder_path = base_path
-      |> Path.join(domain)
-      |> Path.join(user_name)
-      |> Path.join(folder)
-      |> Path.expand
+    |> Path.join(domain)
+    |> Path.join(user_name)
+    |> Path.join(folder)
+    |> Path.expand
 
-      if File.exists?(path = folder_path |> Path.join("cur") |> Path.join(id)) do
-        email_path = path
-      end
-
-      if File.exists?(path = folder_path |> Path.join("new") |> Path.join(id)) do
-        email_path = path
-      end
-      email_path
+    if File.exists?(path = folder_path |> Path.join("cur") |> Path.join(id)) do
+      path
+    else
+    if File.exists?(path = folder_path |> Path.join("new") |> Path.join(id)) do
+      path
+    else
+      raise "Path does not exist: #{path}; email_id: #{id}"
+    end
+    end
   end
 
 
@@ -54,7 +55,6 @@ defmodule Mailbag.Email do
 
   def extract_gmime_body(path) do
     command = Path.dirname(__ENV__.file) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
-    IO.puts command
     {email_txt, 1} = System.cmd command, [path]
     email_txt
   end
