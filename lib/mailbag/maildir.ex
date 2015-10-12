@@ -72,7 +72,7 @@ defmodule Mailbag.Maildir do
       {_, date} -> {:ok, date} = Timex.DateFormat.parse("Mon, 1 Jan 1970 00:00:00 +0000", "{RFC1123}"); date
     end
     {:ok, date_sort_string} = Timex.Format.DateTime.Formatters.Default.format(date, "{YYYY}{M}{D}{h24}{m}{s}")
-    %{content_type: content_type, boundary: boundary} = extract_content_type_and_boundary(header)
+    %{content_type: content_type, boundary: boundary, charset: charset} = extract_content_type_and_boundary(header)
 
     %{id: email_id, from: from, from_email: from_email, subject: subject, date: date, content_type: content_type, date_sort_string: date_sort_string, boundary: boundary}
   end
@@ -101,7 +101,7 @@ defmodule Mailbag.Maildir do
 
       additions = String.split(full_line, ";")
       |> Enum.slice(1..-1)
-      |> Enum.reduce(%{}, fn(x, acc) ->
+      |> Enum.reduce(%{content_type: "", boundary: "", charset: ""}, fn(x, acc) ->
         [_, key, val] = Regex.run(~r/(\w*)="?(.*)"?/, x)
         res = case key do
           "boundary" -> %{boundary: String.replace(val, "\"", "")}
