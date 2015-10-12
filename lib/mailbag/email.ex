@@ -7,14 +7,21 @@ defmodule Mailbag.Email do
   @doc """
   Returns the content of a single email
   """
-  def one(email, id, folder \\ "INBOX") do
-    mailbox_path = Mailbag.Maildir.mailbox_path(email, folder)
-    path = mailbox_path |> Path.join("new") |> Path.join(id)
-    if File.exists?(path), do: email_path = path
-    path = mailbox_path |> Path.join("cur") |> Path.join(id)
-    if File.exists?(path), do: email_path = path
-    {:ok, content} = File.read(email_path)
-    content
+  def one(base_path, id, email_address, folder \\ "INBOX") do
+    mailbox_path = Mailbag.Maildir.mailbox_path(base_path, email_address, folder)
+    dir = "cur"
+    tmp_path = mailbox_path |> Path.join("new")
+    if File.exists?(tmp_path), do: folder_path = tmp_path; dir="new"
+    tmp_path = mailbox_path |> Path.join("cur")
+    if File.exists?(tmp_path), do: folder_path = tmp_path; dir="cur"
+    email_path = folder_path |> Path.join(id)
+    if File.exists?(email_path) do
+      email_text = extract_gmime_body(email_path)
+      header = Mailbag.Maildir.parse_email_header(folder_path, id)
+      {email_text, header, email_path, dir}
+    else
+      raise "Email path not found: #{email_path}"
+    end
   end
 
 
