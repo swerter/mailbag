@@ -45,21 +45,6 @@ defmodule Mailbag.Maildir do
   end
 
 
-  @doc """
-  Returns the content of a single email
-  """
-  def one(email, id, folder \\ "INBOX") do
-    mailbox_path = mailbox_path(email, folder)
-    path = mailbox_path |> Path.join("new") |> Path.join(id)
-    if File.exists?(path), do: email_path = path
-    path = mailbox_path |> Path.join("cur") |> Path.join(id)
-    if File.exists?(path), do: email_path = path
-    IO.inspect email_path
-    {:ok, content} = File.read(email_path)
-    IO.inspect content
-    content
-  end
-
 
   @doc """
   Extract information from the email header.
@@ -70,24 +55,102 @@ defmodule Mailbag.Maildir do
     email_file_path = Path.join(folder_path, email_id)
 
     content_stream = File.stream!(email_file_path)
-    from = extract_from_header(content_stream, "From")
+    header = extract_header(content_stream)
+    from = extract_from_header(content_stream, "From:")
     if is_nil(Regex.run(~r/.*<(.*)>/, from)) do
       from_email =  from
     else
       from_email = Regex.run(~r/.*<(.*)>/, from) |> List.last
     end
-    subject = extract_from_header(content_stream, "Subject")
+    from_email = Mailbag.MimeMail.Words.word_decode(from_email)
+    subject = extract_from_header(content_stream, "Subject:")
     |> Mailbag.MimeMail.Words.word_decode
     # If there is no date in the header
-    date = extract_from_header(content_stream, "Date") |> date_cleansing
+    date = extract_from_header(content_stream, "Date:") |> date_cleansing
     date = case Timex.DateFormat.parse(date, "{RFC1123}") do
       {:ok, date} -> date
-      {_, date} -> Timex.DateFormat.parse("Mon, 1 Jan 1970 00:00:00 +0000", "{RFC1123}")
+      {_, date} -> {:ok, date} = Timex.DateFormat.parse("Mon, 1 Jan 1970 00:00:00 +0000", "{RFC1123}"); date
     end
-    content_type = extract_from_header(content_stream, "Content-Type")
+    {:ok, date_sort_string} = Timex.Format.DateTime.Formatters.Default.format(date, "{YYYY}{M}{D}{h24}{m}{s}")
+    %{content_type: content_type, boundary: boundary} = extract_content_type_and_boundary(header)
 
-    %{id: email_id, from: from, from_email: from_email, subject: subject, date: date, content_type: content_type}
+    %{id: email_id, from: from, from_email: from_email, subject: subject, date: date, content_type: content_type, date_sort_string: date_sort_string, boundary: boundary}
   end
+
+
+  def extract_header(stream) do
+    Stream.take_while(stream, &(&1 != "\n")) # get header
+    |> Enum.to_list
+    |> Enum.join("")
+  end
+
+
+
+  def extract_content_type_and_boundary(header) do
+    re = ~r/Content-[T|t]ype: .*\n?(\s+.*\n)*/
+    if is_nil(Regex.run(re, header)) do
+      %{content_type: "", boundary: "", charset: ""}
+    else
+      boundary = ""
+      charset = ""
+      full_line = Regex.run(re, header) |> Enum.at(0)
+
+      if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/|-]*);/, full_line) do
+        [_, content_type] = Regex.run(re, full_line)
+      end
+
+      additions = String.split(full_line, ";")
+      |> Enum.slice(1..-1)
+      |> Enum.reduce(%{}, fn(x, acc) ->
+        [_, key, val] = Regex.run(~r/(\w*)="?(.*)"?/, x)
+        res = case key do
+          "boundary" -> %{boundary: String.replace(val, "\"", "")}
+          "charset" ->  %{charset: String.replace(val, "\"", "")}
+            _ -> %{}
+        end
+        Map.merge(acc, res)
+      end)
+
+
+      # if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/]*);\s*boundary="(.*)";?/, full_line) do
+      #   [_, content_type, boundary] = Regex.run(re, full_line)
+      #   boundary = String.replace(boundary, "\"", "")
+      # end
+
+      # if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/]*); charset=(.*);?/, full_line) do
+      #   [_, content_type, charset] = Regex.run(re, full_line)
+      # end
+
+      # if Regex.match?(re = ~r/Content-[T|t]ype: ([\w|\/]*); charset=(.*);?.*/, full_line) do
+      #   [_, content_type, charset] = Regex.run(re, full_line)
+      # end
+      # charset = charset |> String.replace("\"", "")
+      # boundary = boundary |> String.replace(";", "")
+      Map.merge(%{content_type: content_type, charset: charset}, additions)
+    end
+  end
+
+
+  def extract_content_transfer_encoding(header) do
+    re = Regex.run(~r/Content-[T|t]ransfer-[E|e]ncoding:\s+([\w|-]*)/, header) |> Enum.at(1)
+  end
+
+
+  # Extracts the field "type" from the email header
+  # Example extract_from_header(stream, "From") would return the email sender, eg. "Hans Huber <h.h@blue.com>"
+  def extract_from_header(stream, type) do
+    res = Stream.take_while(stream, &(&1 != "\n")) # get header
+    |> Stream.filter(&(Regex.match?(~r/^\S*?#{type}.*\n/, &1))) |> Enum.at(0) # extract from header the field
+    if res == 0 do # if not found, return empty string
+      ""
+    else # if found, return the field
+      res
+      |> String.split("#{type}")
+      |> List.last
+      |> String.strip
+    end
+  end
+
 
 
   @doc """
@@ -130,22 +193,6 @@ defmodule Mailbag.Maildir do
   defp date_cleansing_single_digits(date) do
     # Remove single digits in hours " to "5 Oct 2015 3:36:10 +0200"
     Regex.replace(~r/(.*)\D(\d:\d\d:\d\d)(.*)/, date, "\\g{1} 0\\g{2}\\g{3}")
-  end
-
-
-  # Extracts the field "type" from the email header
-  # Example extract_from_header(stream, "From") would return the email sender, eg. "Hans Huber <h.h@blue.com>"
-  def extract_from_header(stream, type) do
-    res = Stream.take_while(stream, &(&1 != "\n")) # get header
-    |> Stream.filter(&(Regex.match?(~r/^\S*?#{type}:.*\n/, &1))) |> Enum.at(0) # extract from header the field
-    if res == 0 do # if not found, return empty string
-      ""
-    else # if found, return the field
-      res
-      |> String.split("#{type}:")
-      |> List.last
-      |> String.strip
-    end
   end
 
 
