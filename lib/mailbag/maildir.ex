@@ -40,8 +40,8 @@ defmodule Mailbag.Maildir do
     {:ok, new_emails} = File.ls(Path.join(maildir_path, "new"))
     {:ok, current_emails} = File.ls(Path.join(maildir_path, "cur"))
 
-    new_email_headers = Mailbag.Email.extract_gmime_headers("#{Path.join(maildir_path, "new")}/*")
-    cur_email_headers = Mailbag.Email.extract_gmime_headers("#{Path.join(maildir_path, "new")}/*")
+    new_email_headers = Mailbag.Email.extract_gmime_headers(Path.join(maildir_path, "new"))
+    cur_email_headers = Mailbag.Email.extract_gmime_headers(Path.join(maildir_path, "new"))
 
     Map.merge(new_email_headers, cur_email_headers)
   end
