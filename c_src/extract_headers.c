@@ -75,6 +75,8 @@ void extract_addresses(InternetAddressList *address_list, GMimeStream *out_strea
 }
 
 void extract_headers (GMimeMessage *message, GMimeStream *out_stream) {
+  const char *subject;
+  char *escaped_subject;
   const char *sender;
   char *escaped_sender;
   const char *reply_to;
@@ -83,36 +85,38 @@ void extract_headers (GMimeMessage *message, GMimeStream *out_stream) {
   int tz;
   char buf[64];
   struct tm *t_m;
-    g_mime_stream_printf (out_stream, "subject: \"%s\", ", g_mime_message_get_subject(message));
-    g_mime_stream_printf (out_stream, "message_id: \"%s\", ", g_mime_message_get_message_id(message));
-    sender = g_mime_message_get_sender(message);
-    escaped_sender = str_replace((char *) sender, "\"", "");
-    g_mime_stream_printf (out_stream, "sender: \"%s\", ", escaped_sender);
-    reply_to = g_mime_message_get_reply_to(message);
-    escaped_reply_to = str_replace((char *) reply_to, "\"", "");
-    g_mime_stream_printf (out_stream, "reply_to: \"%s\", ", escaped_reply_to);
-    g_mime_message_get_date (message, &t, &tz);
-    t_m = localtime (&t);
-    strftime(buf, sizeof(buf) - 1, "%c", t_m);
-    g_mime_stream_printf (out_stream, "date: \"%s\", ", buf);
-    strftime(buf, sizeof(buf) - 1, "%Y%m%d%H%M%S", t_m);
-    g_mime_stream_printf (out_stream, "sort_date: \"%s\", ", buf);
+  subject = g_mime_message_get_subject(message);
+  escaped_subject = str_replace((char *) subject, "\"", "");
+  g_mime_stream_printf (out_stream, "subject: \"%s\", ", escaped_subject);
+  g_mime_stream_printf (out_stream, "message_id: \"%s\", ", g_mime_message_get_message_id(message));
+  sender = g_mime_message_get_sender(message);
+  escaped_sender = str_replace((char *) sender, "\"", "");
+  g_mime_stream_printf (out_stream, "sender: \"%s\", ", escaped_sender);
+  reply_to = g_mime_message_get_reply_to(message);
+  escaped_reply_to = str_replace((char *) reply_to, "\"", "");
+  g_mime_stream_printf (out_stream, "reply_to: \"%s\", ", escaped_reply_to);
+  g_mime_message_get_date (message, &t, &tz);
+  t_m = localtime (&t);
+  strftime(buf, sizeof(buf) - 1, "%c", t_m);
+  g_mime_stream_printf (out_stream, "date: \"%s\", ", buf);
+  strftime(buf, sizeof(buf) - 1, "%Y%m%d%H%M%S", t_m);
+  g_mime_stream_printf (out_stream, "sort_date: \"%s\", ", buf);
 
-    InternetAddressList *recipients;
-    recipients = g_mime_message_get_recipients(message, GMIME_RECIPIENT_TYPE_TO);
-    g_mime_stream_printf (out_stream, "recipients_to: [");
-    extract_addresses(recipients, out_stream);
-    g_mime_stream_printf (out_stream, "], ");
+  InternetAddressList *recipients;
+  recipients = g_mime_message_get_recipients(message, GMIME_RECIPIENT_TYPE_TO);
+  g_mime_stream_printf (out_stream, "recipients_to: [");
+  extract_addresses(recipients, out_stream);
+  g_mime_stream_printf (out_stream, "], ");
 
-    recipients = g_mime_message_get_recipients(message, GMIME_RECIPIENT_TYPE_CC);
-    g_mime_stream_printf (out_stream, "recipients_cc: [");
-    extract_addresses(recipients, out_stream);
-    g_mime_stream_printf (out_stream, "], ");
+  recipients = g_mime_message_get_recipients(message, GMIME_RECIPIENT_TYPE_CC);
+  g_mime_stream_printf (out_stream, "recipients_cc: [");
+  extract_addresses(recipients, out_stream);
+  g_mime_stream_printf (out_stream, "], ");
 
-    recipients = g_mime_message_get_recipients(message, GMIME_RECIPIENT_TYPE_BCC);
-    g_mime_stream_printf (out_stream, "recipients_bcc: [");
-    extract_addresses(recipients, out_stream);
-    g_mime_stream_printf (out_stream, "] ");
+  recipients = g_mime_message_get_recipients(message, GMIME_RECIPIENT_TYPE_BCC);
+  g_mime_stream_printf (out_stream, "recipients_bcc: [");
+  extract_addresses(recipients, out_stream);
+  g_mime_stream_printf (out_stream, "] ");
 }
 
 
