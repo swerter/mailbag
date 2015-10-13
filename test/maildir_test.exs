@@ -17,18 +17,17 @@ defmodule Maildir.MaildirTests do
     assert Enum.any?(subjects, &(String.match?(&1,~r/¿TE IMAGINAS ENVIOS EN 24 HORAS?/)))
   end
 
+  test "list all emails in a maildir " do
+    maildir_path = "/home/michael/Maildir/migadu.ch/mjb/INBOX"
+    emails = Mailbag.Maildir.all(maildir_path)
+  end
 
-  test "mailcleansing" do
-    clean_date = Mailbag.Maildir.date_cleansing("Mon, 5 Oct 2015 13:36:10 +0200 (CEST)")
-    assert {:ok, _} = Timex.DateFormat.parse(clean_date, "{RFC1123}")
-    clean_date = Mailbag.Maildir.date_cleansing("5 Oct 2015 13:36:10 +0200 (CEST)")
-    assert {:ok, _} = Timex.DateFormat.parse(clean_date, "{RFC1123}")
-    clean_date = Mailbag.Maildir.date_cleansing("Thu,  1 Oct 2015 20:32:09 GMT")
-    assert {:ok, _} = Timex.DateFormat.parse(clean_date, "{RFC1123}")
-    clean_date = Mailbag.Maildir.date_cleansing("Wed, 12 Aug 2015 9:34:50 +0200")
-    assert {:ok, _} = Timex.DateFormat.parse(clean_date, "{RFC1123}")
-    clean_date = Mailbag.Maildir.date_cleansing("Thu, 5 Feb 2015 09:50:04 -0500")
-    assert {:ok, _} = Timex.DateFormat.parse(clean_date, "{RFC1123}")
+  test "mailbox_path " do
+    base_path = "/aaa/bbb/"
+    email = "hum@blum.com"
+    folder = "Drafts"
+    mailbox_path = Mailbag.Maildir.mailbox_path(base_path, email, folder)
+    assert mailbox_path == "/aaa/bbb/blum.com/hum/Drafts"
   end
 
 end
