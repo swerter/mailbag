@@ -1,5 +1,5 @@
-defmodule Mix.Tasks.Compile.Iconv do
-  @shortdoc "Compiles Iconv"
+defmodule Mix.Tasks.Compile.CLibs do
+  @shortdoc "Compiles C libraries"
   def run(_) do
     # if not File.exists?("priv/Elixir.Iconv_nif.so") do
     #   [i_erts]=Path.wildcard("#{:code.root_dir}/erts*/include")
@@ -35,7 +35,7 @@ defmodule Mailbag.Mixfile do
      package: package,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     # compilers: [:iconv, :elixir, :app],
+     compilers: [:c_libs, :elixir, :app],
      deps: deps]
   end
 
