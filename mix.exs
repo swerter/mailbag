@@ -13,6 +13,14 @@ defmodule Mix.Tasks.Compile.Iconv do
       args = "-Wall -O0 -ggdb3 `pkg-config --cflags --libs gmime-2.6`"
       Mix.shell.info to_string :os.cmd('gcc #{args} -v -o priv/extract_text c_src/extract_text.c')
     end
+    if not File.exists?("priv/extract_structure") do
+      args = "-Wall -O0 -ggdb3 `pkg-config --cflags --libs gmime-2.6`"
+      Mix.shell.info to_string :os.cmd('gcc #{args} -v -o priv/extract_structure c_src/extract_structure.c')
+    end
+    if not File.exists?("priv/extract_headers") do
+      args = "-Wall -O0 -ggdb3 `pkg-config --cflags --libs gmime-2.6`"
+      Mix.shell.info to_string :os.cmd('gcc #{args} -v -o priv/extract_headers c_src/extract_headers.c')
+    end
   end
 end
 
@@ -35,7 +43,7 @@ defmodule Mailbag.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :tzdata]]
+    [applications: [:logger, :tzdata, :porcelain]]
   end
 
   defp package do
@@ -60,7 +68,8 @@ defmodule Mailbag.Mixfile do
       {:ex_doc, "~> 0.10", only: :dev},
       {:benchfella, "~> 0.2", only: :dev},
       {:dialyze, "~> 0.2", only: :dev},
-      {:inch_ex, "== 0.3.3", only: :docs}
+      {:inch_ex, "== 0.3.3", only: :docs},
+      {:porcelain, "~> 2.0"}
     ]
   end
 end

@@ -1,5 +1,5 @@
 /* gmime-test; compile with:
-   gcc -o test3 test3.c -Wall -O0 -ggdb3 \
+   gcc -o extract_text extract_text.c -Wall -O0 -ggdb3 \
    `pkg-config --cflags --libs gmime-2.6`
 */
 #include <gmime/gmime.h>

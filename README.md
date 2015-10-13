@@ -3,6 +3,10 @@
 **A library for parsing maildir folders**
 
 ## Installation
+### Setup
+You need first to install gmime:
+
+    sudo apt-get install golang libgmime-2.6-dev
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
 
