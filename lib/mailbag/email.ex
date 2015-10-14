@@ -10,7 +10,9 @@ defmodule Mailbag.Email do
   def one(base_path, email_address, id, folder \\ "INBOX") do
     email_path = Mailbag.Email.email_path(base_path, email_address, id, folder)
     email_text = extract_gmime_text(email_path)
+    IO.puts email_text
     headers = Mailbag.Email.extract_gmime_headers(email_path)
+    IO.inspect headers
     {email_text, headers, email_path}
   end
 
