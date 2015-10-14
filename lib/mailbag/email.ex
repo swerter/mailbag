@@ -7,11 +7,13 @@ defmodule Mailbag.Email do
   @doc """
   Returns the content of a single email
   """
-  def one(base_path, email_address, id, folder \\ "INBOX") do
+  def one(base_path, email_address, id, folder \\ ".") do
     email_path = Mailbag.Email.email_path(base_path, email_address, id, folder)
     email_text = extract_gmime_text(email_path)
-    header = Mailbag.Maildir.parse_email_header(email_path)
-    {email_text, header, email_path}
+    IO.puts email_text
+    headers = Mailbag.Email.extract_gmime_headers(email_path)
+    IO.inspect headers
+    {email_text, headers, email_path}
   end
 
 
@@ -22,10 +24,10 @@ defmodule Mailbag.Email do
   email_path converts the email to such a path.
 
       Mailbag.Email.email_path("/x/test/data", "aaa@test.com", "1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
-      "/x/bbb.com/aaa/INBOX/cur/1443716371_0.10854.brumbrum,U=609,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
+      "/x/bbb.com/aaa/cur/1443716371_0.10854.brumbrum,U=609,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
 
   """
-  def email_path(base_path, email, id, folder \\ "INBOX") do
+  def email_path(base_path, email, id, folder \\ ".") do
     [user_name, domain] = String.split(email, "@")
 
     folder_path = base_path
@@ -51,16 +53,17 @@ defmodule Mailbag.Email do
   is returned. If not, the plain text is passed through a basic html filter and
   returned.
   ## Example
-      iex> Mailbag.Email.extract_gmime_text("./test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      iex> Mailbag.Email.extract_gmime_text("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
       "xx"
 
 
   """
   def extract_gmime_text(path) do
-    command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
-    %{out: email_text, status: 1} = Porcelain.exec command, [path]
-    {res, []} = Code.eval_string(email_text)
-    res
+    command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
+    # %{out: email_text, status: 1} = Porcelain.exec command, [path]
+    unless is_list(path), do: path = [path]
+    {email_text, 1} = System.cmd command, path
+    email_text
   end
 
 
@@ -69,14 +72,14 @@ defmodule Mailbag.Email do
   is returned. If not, the plain text is passed through a basic html filter and
   returned.
   ## Example
-      iex> Mailbag.Email.extract_gmime_body_structure("./test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      iex> Mailbag.Email.extract_gmime_body_structure("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
       %{multipart: %{entries: [%{type: "plain"}, %{type: "html"}], type: "multipart/alternative"}}
-
-
   """
   def extract_gmime_body_structure(path) do
-    command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_structure") |> Path.expand
-    %{out: email_structure, status: 1} = Porcelain.exec command, [path]
+    command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_structure") |> Path.expand
+    # %{out: email_structure, status: 1} = Porcelain.exec command, [path]
+    unless is_list(path), do: path = [path]
+    {email_structure, 1} = System.cmd command, path
     {res, []} = Code.eval_string(email_structure)
     res
   end
@@ -87,25 +90,77 @@ defmodule Mailbag.Email do
   ## Example
   %{date: "Thu 24 Sep 2015 01:55:49 PM CEST",
   message_id: "NM658B0B631029381DDvsncf@newsletter.voyages-sncf.com",
-  path: "./test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,",
+  path: "./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,",
   recipients_bcc: [], recipients_cc: [], recipients_to: ["blue@tester.ch"],
   reply_to: "Voyages-sncf.com <bonsplans@newsletter.voyages-sncf.com>",
   sender: "Voyages-sncf.com <bonsplans@newsletter.voyages-sncf.com>",
   sort_date: "20150924135549",
   subject: "PETITS PRIX : 2 millions de billets a prix Prem's avec TGV et Intercites !"}
-
-
   """
   def extract_gmime_headers(path) do
     command = Path.dirname(__DIR__)  |> Path.join("..") |> Path.join("priv") |> Path.join("extract_headers") |> Path.expand
-    IO.puts command
-    IO.puts Path.expand(__DIR__)
-    %{out: email_headers, status: 1} = Porcelain.exec command, [path]
-    IO.puts email_headers
+    # %{out: email_headers, status: 1} = Porcelain.exec command, [path]
+    unless is_list(path), do: path = [path]
+    {email_headers, 1} = System.cmd command, path
     {res, []} = Code.eval_string(email_headers)
     res
   end
 
+
+  @doc """
+  If an email has been seen, it's moved from the 'new' directory to the
+  'cur' directory within the maildir folder.
+  """
+  def seen(path) do
+  end
+
+
+  @doc """
+  Returns the id, that is the filename of the email
+  'cur' directory within the maildir folder.
+  Example:
+      iex> Mailbag.Email.id("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      "1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
+  """
+  def id(path) do
+    Path.basename(path)
+  end
+
+
+  @doc """
+  Returns whether the email has been seen.
+  Inernally, that means if the email is in the 'cur' directory within the maildir folder.
+  Example:
+      iex> Mailbag.Email.seen?("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      true
+  """
+  def seen?(path) do
+    (Path.dirname(path) |> Path.basename) == "cur"
+  end
+
+
+  @doc """
+  Returns whether the email is new.
+  Inernally, that means if the email is in the 'new' directory within the maildir folder.
+  Example:
+      iex> Mailbag.Email.new?("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      false
+  """
+  def new?(path) do
+    (Path.dirname(path) |> Path.basename) == "new"
+  end
+
+
+  @doc """
+  Returns the base_path of a path, that is without the filename and
+  without the 'cur' or 'tmp' directory.
+  Example:
+      iex> Mailbag.Email.base_path("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      "./test/data/test.com/aaa"
+  """
+  def base_path(path) do
+    Path.dirname(path) |> Path.dirname
+  end
 
   # def extract_body(stream) do
   #   System.cmd

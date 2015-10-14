@@ -12,12 +12,12 @@ defmodule Mailbag.Maildir do
   mailbox_path converts the email to such a path.
   ## Example
       iex> Mailbag.Maildir.mailbox_path("/x/", "aaa@bbb.com")
-      "/x/bbb.com/aaa/INBOX"
+      "/x/bbb.com/aaa"
       iex> Mailbag.Maildir.mailbox_path("/x/", "aaa@bbb.com", "Draft")
       "/x/bbb.com/aaa/Draft"
 
   """
-  def mailbox_path(base_path, email, folder \\ "INBOX") do
+  def mailbox_path(base_path, email, folder \\ ".") do
     [user_name, domain] = String.split(email, "@")
 
     base_path
@@ -30,20 +30,49 @@ defmodule Mailbag.Maildir do
   @doc """
   Extract a list of all emails in a maildir folder, including 'cur', and 'new'.
   ## Example
-      iex> emails = Mailbag.Maildir.all("test/data/INBOX") |> Enum.count
+      iex> emails = Mailbag.Maildir.all("test/data/test.com/aaa/") |> Enum.count
       4
 
   """
-  def all(maildir_path) do
-    unless is_maildir?(maildir_path), do: raise "Not a maildir"
+  def all(maildir_path, sorted_by \\ :date) do
+    unless is_maildir?(maildir_path), do: raise "Not a maildir: #{maildir_path}"
 
     {:ok, new_emails} = File.ls(Path.join(maildir_path, "new"))
-    {:ok, current_emails} = File.ls(Path.join(maildir_path, "cur"))
+    {:ok, cur_emails} = File.ls(Path.join(maildir_path, "cur"))
 
-    new_email_headers = Mailbag.Email.extract_gmime_headers(Path.join(maildir_path, "new"))
-    cur_email_headers = Mailbag.Email.extract_gmime_headers(Path.join(maildir_path, "new"))
+    new_emails = Enum.map(new_emails, fn(x) -> maildir_path |> Path.join("new") |> Path.join(x) end)
+    cur_emails = Enum.map(cur_emails, fn(x) -> maildir_path |> Path.join("cur") |> Path.join(x) end)
 
-    Map.merge(new_email_headers, cur_email_headers)
+    new_email_headers = case Enum.count(new_emails) do
+      0 -> []
+      1 -> [Mailbag.Email.extract_gmime_headers(new_emails)]
+      _ -> Mailbag.Email.extract_gmime_headers(new_emails)
+    end
+
+    cur_email_headers = case Enum.count(cur_emails) do
+      0 -> []
+      1 -> [Mailbag.Email.extract_gmime_headers(cur_emails)]
+      _ -> Mailbag.Email.extract_gmime_headers(cur_emails)
+    end
+
+
+    emails = new_email_headers ++ cur_email_headers
+    case sorted_by do
+      :date -> Enum.sort(emails, &(&1.sort_date < &2.sort_date))
+      :date_inv -> Enum.sort(emails, &(&1.sort_date > &2.sort_date))
+      :subject -> Enum.sort(emails, &(&1.subject < &2.subject))
+      :subject_inv -> Enum.sort(emails, &(&1.subject > &2.subject))
+      :sender -> Enum.sort(emails, &(&1.subject < &2.subject))
+      :sender_inv -> Enum.sort(emails, &(&1.subject > &2.subject))
+    end
+  end
+
+
+  def is_maildir?(path) do
+    File.dir?(path) &&
+    File.dir?(Path.join(path, 'new')) &&
+    File.dir?(Path.join(path, 'cur')) &&
+    File.dir?(Path.join(path, 'tmp'))
   end
 
 
@@ -196,13 +225,5 @@ defmodule Mailbag.Maildir do
   #   # Remove single digits in hours " to "5 Oct 2015 3:36:10 +0200"
   #   Regex.replace(~r/(.*)\D(\d:\d\d:\d\d)(.*)/, date, "\\g{1} 0\\g{2}\\g{3}")
   # end
-
-
-  def is_maildir?(path) do
-    File.dir?(path) &&
-    File.dir?(Path.join(path, 'new')) &&
-    File.dir?(Path.join(path, 'cur')) &&
-    File.dir?(Path.join(path, 'tmp'))
-  end
 
 end
