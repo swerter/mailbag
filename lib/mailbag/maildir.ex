@@ -12,12 +12,12 @@ defmodule Mailbag.Maildir do
   mailbox_path converts the email to such a path.
   ## Example
       iex> Mailbag.Maildir.mailbox_path("/x/", "aaa@bbb.com")
-      "/x/bbb.com/aaa/INBOX"
+      "/x/bbb.com/aaa"
       iex> Mailbag.Maildir.mailbox_path("/x/", "aaa@bbb.com", "Draft")
       "/x/bbb.com/aaa/Draft"
 
   """
-  def mailbox_path(base_path, email, folder \\ "INBOX") do
+  def mailbox_path(base_path, email, folder \\ ".") do
     [user_name, domain] = String.split(email, "@")
 
     base_path
@@ -30,7 +30,7 @@ defmodule Mailbag.Maildir do
   @doc """
   Extract a list of all emails in a maildir folder, including 'cur', and 'new'.
   ## Example
-      iex> emails = Mailbag.Maildir.all("test/data/test.com/aaa/INBOX") |> Enum.count
+      iex> emails = Mailbag.Maildir.all("test/data/test.com/aaa/") |> Enum.count
       4
 
   """

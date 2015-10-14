@@ -4,7 +4,7 @@ defmodule Mailbag.EmailTests do
 
 
   test "get all headers of a maildir" do
-    maildir_path = "test/data/test.com/aaa/INBOX/cur"
+    maildir_path = "test/data/test.com/aaa/cur"
     {:ok, email_pathes} = File.ls(maildir_path)
     email_pathes = Enum.map(email_pathes, fn(x) -> Path.join(maildir_path, x) end)
     emails = Mailbag.Email.extract_gmime_headers(email_pathes)
@@ -13,7 +13,7 @@ defmodule Mailbag.EmailTests do
 
 
   test "get the headers of an email" do
-    maildir_path = "test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
+    maildir_path = "test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
     email = Mailbag.Email.extract_gmime_headers(maildir_path)
     res = %{date: "Thu 24 Sep 2015 01:55:49 PM CEST",
   message_id: "NM658B0B631029381DDvsncf@newsletter.voyages-sncf.com",
@@ -29,7 +29,7 @@ defmodule Mailbag.EmailTests do
 
 
   test "get the structure of an email" do
-    maildir_path = "test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
+    maildir_path = "test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
     email = Mailbag.Email.extract_gmime_body_structure(maildir_path)
     res = %{multipart: %{entries: [%{type: "plain"}, %{type: "html"}], type: "multipart/alternative"}}
     assert email == res

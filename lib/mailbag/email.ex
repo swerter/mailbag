@@ -7,7 +7,7 @@ defmodule Mailbag.Email do
   @doc """
   Returns the content of a single email
   """
-  def one(base_path, email_address, id, folder \\ "INBOX") do
+  def one(base_path, email_address, id, folder \\ ".") do
     email_path = Mailbag.Email.email_path(base_path, email_address, id, folder)
     email_text = extract_gmime_text(email_path)
     IO.puts email_text
@@ -24,10 +24,10 @@ defmodule Mailbag.Email do
   email_path converts the email to such a path.
 
       Mailbag.Email.email_path("/x/test/data", "aaa@test.com", "1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
-      "/x/bbb.com/aaa/INBOX/cur/1443716371_0.10854.brumbrum,U=609,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
+      "/x/bbb.com/aaa/cur/1443716371_0.10854.brumbrum,U=609,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
 
   """
-  def email_path(base_path, email, id, folder \\ "INBOX") do
+  def email_path(base_path, email, id, folder \\ ".") do
     [user_name, domain] = String.split(email, "@")
 
     folder_path = base_path
@@ -53,7 +53,7 @@ defmodule Mailbag.Email do
   is returned. If not, the plain text is passed through a basic html filter and
   returned.
   ## Example
-      iex> Mailbag.Email.extract_gmime_text("./test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      iex> Mailbag.Email.extract_gmime_text("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
       "xx"
 
 
@@ -71,7 +71,7 @@ defmodule Mailbag.Email do
   is returned. If not, the plain text is passed through a basic html filter and
   returned.
   ## Example
-      iex> Mailbag.Email.extract_gmime_body_structure("./test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      iex> Mailbag.Email.extract_gmime_body_structure("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
       %{multipart: %{entries: [%{type: "plain"}, %{type: "html"}], type: "multipart/alternative"}}
 
 
@@ -89,7 +89,7 @@ defmodule Mailbag.Email do
   ## Example
   %{date: "Thu 24 Sep 2015 01:55:49 PM CEST",
   message_id: "NM658B0B631029381DDvsncf@newsletter.voyages-sncf.com",
-  path: "./test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,",
+  path: "./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,",
   recipients_bcc: [], recipients_cc: [], recipients_to: ["blue@tester.ch"],
   reply_to: "Voyages-sncf.com <bonsplans@newsletter.voyages-sncf.com>",
   sender: "Voyages-sncf.com <bonsplans@newsletter.voyages-sncf.com>",
