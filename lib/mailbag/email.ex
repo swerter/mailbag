@@ -98,10 +98,7 @@ defmodule Mailbag.Email do
   """
   def extract_gmime_headers(path) do
     command = Path.dirname(__DIR__)  |> Path.join("..") |> Path.join("priv") |> Path.join("extract_headers") |> Path.expand
-    IO.puts command
-    IO.puts Path.expand(__DIR__)
     %{out: email_headers, status: 1} = Porcelain.exec command, [path]
-    IO.puts email_headers
     {res, []} = Code.eval_string(email_headers)
     res
   end
