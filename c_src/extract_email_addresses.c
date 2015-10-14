@@ -61,7 +61,8 @@ char *str_replace(char *orig, char *rep, char *with) {
 
 
 void extract_addresses(InternetAddressList *address_list, GMimeStream *out_stream) {
-  for (int i=0; i<internet_address_list_length(address_list); i++) {
+  int i;
+  for (i=0; i<internet_address_list_length(address_list); i++) {
     if (i > 0) {
       g_mime_stream_printf (out_stream, ", ");
     }
@@ -181,7 +182,8 @@ main (int argc, char *argv[])
   g_mime_init(GMIME_ENABLE_RFC2047_WORKAROUNDS);
 
   g_mime_stream_printf (out_stream, "[");
-  for (int x = 1; x < argc; x++ ) {
+  int x;
+  for (x = 1; x < argc; x++ ) {
     if (x > 1) {
       g_mime_stream_printf (out_stream, ", ");
     }

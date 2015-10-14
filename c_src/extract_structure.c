@@ -19,9 +19,10 @@ void extract_all_parts (GMimePart *part, GMimeStream *out_stream) {
   } else if (GMIME_IS_MULTIPART (part)) {
     /* g_mime_stream_printf (out_stream, g_mime_content_type_to_string(g_mime_object_get_content_type((GMimeObject *) part))); */
     int nr_parts;
+    int i;
     nr_parts = g_mime_multipart_get_count ((GMimeMultipart *) part);
     g_mime_stream_printf (out_stream, "multipart: %%{type: \"%s\", entries: [", g_mime_content_type_to_string(g_mime_object_get_content_type((GMimeObject *) part)));
-    for(int i=0; i<nr_parts; i++) {
+    for(i=0; i<nr_parts; i++) {
       if (i > 0) {
         g_mime_stream_printf (out_stream, ", ");
       }

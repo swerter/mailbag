@@ -47,8 +47,9 @@ void extract_html_foreach_callback (GMimeObject *parent, GMimeObject *part, gpoi
     if (g_mime_content_type_is_type(g_mime_object_get_content_type(part), "multipart", "alternative")) {
       GMimeObject *subpart;
       int nr_parts;
+      int i;
       nr_parts = g_mime_multipart_get_count ((GMimeMultipart *) part);
-      for(int i=0; i<nr_parts; i++) {
+      for(i=0; i<nr_parts; i++) {
         subpart = g_mime_multipart_get_part((GMimeMultipart *) part, i);
         if (g_mime_content_type_is_type(g_mime_object_get_content_type(subpart), "text", "html")) {
           (*count)++;
