@@ -1,4 +1,4 @@
-defmodule Maildir.EmailTests do
+defmodule Mailbag.EmailTests do
   use ExUnit.Case, async: true
   doctest Mailbag.Email
 
@@ -10,6 +10,7 @@ defmodule Maildir.EmailTests do
     emails = Mailbag.Email.extract_gmime_headers(email_pathes)
     assert Enum.count(emails) == 3
   end
+
 
   test "get the headers of an email" do
     maildir_path = "test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
@@ -27,11 +28,11 @@ defmodule Maildir.EmailTests do
   end
 
 
-
   test "get the structure of an email" do
     maildir_path = "test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
     email = Mailbag.Email.extract_gmime_body_structure(maildir_path)
     res = %{multipart: %{entries: [%{type: "plain"}, %{type: "html"}], type: "multipart/alternative"}}
     assert email == res
   end
+
 end
