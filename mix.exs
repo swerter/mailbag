@@ -9,6 +9,7 @@ defmodule Mix.Tasks.Compile.CLibs do
     #   args = args <> if {:unix,:darwin}==:os.type, do: "-undefined dynamic_lookup -dynamiclib", else: ""
     #   Mix.shell.info to_string :os.cmd('gcc #{args} -v -o priv/Elixir.Iconv_nif.so c_src/iconv_nif.c')
     # end
+    File.mkdir_p "priv"
     if not File.exists?("priv/extract_text") do
       args = "-Wall -O0 -ggdb3 `pkg-config --cflags --libs gmime-2.6`"
       Mix.shell.info to_string :os.cmd('gcc #{args} -v -o priv/extract_text c_src/extract_text.c')
