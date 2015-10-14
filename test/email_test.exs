@@ -17,7 +17,7 @@ defmodule Mailbag.EmailTests do
     email = Mailbag.Email.extract_gmime_headers(maildir_path)
     res = %{date: "Thu 24 Sep 2015 01:55:49 PM CEST",
   message_id: "NM658B0B631029381DDvsncf@newsletter.voyages-sncf.com",
-  path: "test/data/test.com/aaa/INBOX/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,",
+  path: "test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,",
   recipients_bcc: [], recipients_cc: [], recipients_to: ["blue@tester.ch"],
   reply_to: "Voyages-sncf.com <bonsplans@newsletter.voyages-sncf.com>",
   sender: "Voyages-sncf.com <bonsplans@newsletter.voyages-sncf.com>",

@@ -60,8 +60,9 @@ defmodule Mailbag.Email do
   """
   def extract_gmime_text(path) do
     command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
-    %{out: email_text, status: 1} = Porcelain.exec command, [path]
-    IO.inspect email_text
+    # %{out: email_text, status: 1} = Porcelain.exec command, [path]
+    unless is_list(path), do: path = [path]
+    {email_text, 1} = System.cmd command, path
     email_text
   end
 
@@ -78,7 +79,9 @@ defmodule Mailbag.Email do
   """
   def extract_gmime_body_structure(path) do
     command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_structure") |> Path.expand
-    %{out: email_structure, status: 1} = Porcelain.exec command, [path]
+    # %{out: email_structure, status: 1} = Porcelain.exec command, [path]
+    unless is_list(path), do: path = [path]
+    {email_structure, 1} = System.cmd command, path
     {res, []} = Code.eval_string(email_structure)
     res
   end
@@ -100,7 +103,9 @@ defmodule Mailbag.Email do
   """
   def extract_gmime_headers(path) do
     command = Path.dirname(__DIR__)  |> Path.join("..") |> Path.join("priv") |> Path.join("extract_headers") |> Path.expand
-    %{out: email_headers, status: 1} = Porcelain.exec command, [path]
+    # %{out: email_headers, status: 1} = Porcelain.exec command, [path]
+    unless is_list(path), do: path = [path]
+    {email_headers, 1} = System.cmd command, path
     {res, []} = Code.eval_string(email_headers)
     res
   end
