@@ -74,8 +74,6 @@ defmodule Mailbag.Email do
   ## Example
       iex> Mailbag.Email.extract_gmime_body_structure("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
       %{multipart: %{entries: [%{type: "plain"}, %{type: "html"}], type: "multipart/alternative"}}
-
-
   """
   def extract_gmime_body_structure(path) do
     command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_structure") |> Path.expand
@@ -98,8 +96,6 @@ defmodule Mailbag.Email do
   sender: "Voyages-sncf.com <bonsplans@newsletter.voyages-sncf.com>",
   sort_date: "20150924135549",
   subject: "PETITS PRIX : 2 millions de billets a prix Prem's avec TGV et Intercites !"}
-
-
   """
   def extract_gmime_headers(path) do
     command = Path.dirname(__DIR__)  |> Path.join("..") |> Path.join("priv") |> Path.join("extract_headers") |> Path.expand
@@ -110,6 +106,61 @@ defmodule Mailbag.Email do
     res
   end
 
+
+  @doc """
+  If an email has been seen, it's moved from the 'new' directory to the
+  'cur' directory within the maildir folder.
+  """
+  def seen(path) do
+  end
+
+
+  @doc """
+  Returns the id, that is the filename of the email
+  'cur' directory within the maildir folder.
+  Example:
+      iex> Mailbag.Email.id("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      "1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,"
+  """
+  def id(path) do
+    Path.basename(path)
+  end
+
+
+  @doc """
+  Returns whether the email has been seen.
+  Inernally, that means if the email is in the 'cur' directory within the maildir folder.
+  Example:
+      iex> Mailbag.Email.seen?("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      true
+  """
+  def seen?(path) do
+    (Path.dirname(path) |> Path.basename) == "cur"
+  end
+
+
+  @doc """
+  Returns whether the email is new.
+  Inernally, that means if the email is in the 'new' directory within the maildir folder.
+  Example:
+      iex> Mailbag.Email.new?("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      false
+  """
+  def new?(path) do
+    (Path.dirname(path) |> Path.basename) == "new"
+  end
+
+
+  @doc """
+  Returns the base_path of a path, that is without the filename and
+  without the 'cur' or 'tmp' directory.
+  Example:
+      iex> Mailbag.Email.base_path("./test/data/test.com/aaa/cur/1443716368_0.10854.brumbrum,U=605,FMD5=7e33429f656f1e6e9d79b29c3f82c57e:2,")
+      "./test/data/test.com/aaa"
+  """
+  def base_path(path) do
+    Path.dirname(path) |> Path.dirname
+  end
 
   # def extract_body(stream) do
   #   System.cmd

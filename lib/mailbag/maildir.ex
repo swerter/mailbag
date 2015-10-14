@@ -34,7 +34,7 @@ defmodule Mailbag.Maildir do
       4
 
   """
-  def all(maildir_path) do
+  def all(maildir_path, sorted_by \\ :date) do
     unless is_maildir?(maildir_path), do: raise "Not a maildir: #{maildir_path}"
 
     {:ok, new_emails} = File.ls(Path.join(maildir_path, "new"))
@@ -56,7 +56,23 @@ defmodule Mailbag.Maildir do
     end
 
 
-    new_email_headers ++ cur_email_headers
+    emails = new_email_headers ++ cur_email_headers
+    case sorted_by do
+      :date -> Enum.sort(emails, &(&1.sort_date < &2.sort_date))
+      :date_inv -> Enum.sort(emails, &(&1.sort_date > &2.sort_date))
+      :subject -> Enum.sort(emails, &(&1.subject < &2.subject))
+      :subject_inv -> Enum.sort(emails, &(&1.subject > &2.subject))
+      :sender -> Enum.sort(emails, &(&1.subject < &2.subject))
+      :sender_inv -> Enum.sort(emails, &(&1.subject > &2.subject))
+    end
+  end
+
+
+  def is_maildir?(path) do
+    File.dir?(path) &&
+    File.dir?(Path.join(path, 'new')) &&
+    File.dir?(Path.join(path, 'cur')) &&
+    File.dir?(Path.join(path, 'tmp'))
   end
 
 
@@ -209,13 +225,5 @@ defmodule Mailbag.Maildir do
   #   # Remove single digits in hours " to "5 Oct 2015 3:36:10 +0200"
   #   Regex.replace(~r/(.*)\D(\d:\d\d:\d\d)(.*)/, date, "\\g{1} 0\\g{2}\\g{3}")
   # end
-
-
-  def is_maildir?(path) do
-    File.dir?(path) &&
-    File.dir?(Path.join(path, 'new')) &&
-    File.dir?(Path.join(path, 'cur')) &&
-    File.dir?(Path.join(path, 'tmp'))
-  end
 
 end

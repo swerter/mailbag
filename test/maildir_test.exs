@@ -31,4 +31,32 @@ defmodule Maildir.MaildirTests do
     assert mailbox_path == "/aaa/bbb/blum.com/hum/.Drafts"
   end
 
+  test "emails sorted" do
+    maildir_path = __DIR__ |> Path.join("..") |> Path.join("test/data/test.com/aaa/") |> Path.expand
+    emails = Mailbag.Maildir.all(maildir_path, :date)
+    last_date = "22221212230000"
+    Enum.each(emails, fn(x) -> assert(x.sort_date < last_date); last_date = x.sort_date end)
+  end
+
+  test "emails sorted inverse" do
+    maildir_path = __DIR__ |> Path.join("..") |> Path.join("test/data/test.com/aaa/") |> Path.expand
+    emails = Mailbag.Maildir.all(maildir_path, :date_inv)
+    last_date = "22221212230000"
+    Enum.each(emails, fn(x) -> assert(x.sort_date < last_date); last_date = x.sort_date end)
+  end
+
+
+  test "emails sorted by subject" do
+    maildir_path = __DIR__ |> Path.join("..") |> Path.join("test/data/test.com/aaa/") |> Path.expand
+    emails = Mailbag.Maildir.all(maildir_path, :subject)
+    last_subject = ""
+    Enum.each(emails, fn(x) -> assert(x.subject > last_subject); last_subject = x.subject end)
+  end
+
+  test "emails sorted  by subject inverse" do
+    maildir_path = __DIR__ |> Path.join("..") |> Path.join("test/data/test.com/aaa/") |> Path.expand
+    emails = Mailbag.Maildir.all(maildir_path, :subject_inv)
+    last_subject = to_string(<<255>>)
+    Enum.each(emails, fn(x) -> assert(x.subject < last_subject); last_subject = x.subject end)
+  end
 end
