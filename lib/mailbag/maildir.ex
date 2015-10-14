@@ -43,17 +43,18 @@ defmodule Mailbag.Maildir do
     new_emails = Enum.map(new_emails, fn(x) -> maildir_path |> Path.join("new") |> Path.join(x) end)
     cur_emails = Enum.map(cur_emails, fn(x) -> maildir_path |> Path.join("cur") |> Path.join(x) end)
 
-    case Enum.count(new_emails) do
+    new_email_headers = case Enum.count(new_emails) do
       0 -> []
-      1 -> new_email_headers = [Mailbag.Email.extract_gmime_headers(new_emails)]
-      _ -> new_email_headers = Mailbag.Email.extract_gmime_headers(new_emails)
+      1 -> [Mailbag.Email.extract_gmime_headers(new_emails)]
+      _ -> Mailbag.Email.extract_gmime_headers(new_emails)
     end
 
-    case Enum.count(cur_emails) do
+    cur_email_headers = case Enum.count(cur_emails) do
       0 -> []
-      1 -> cur_email_headers = [Mailbag.Email.extract_gmime_headers(cur_emails)]
-      _ -> cur_email_headers = Mailbag.Email.extract_gmime_headers(cur_emails)
+      1 -> [Mailbag.Email.extract_gmime_headers(cur_emails)]
+      _ -> Mailbag.Email.extract_gmime_headers(cur_emails)
     end
+
 
     new_email_headers ++ cur_email_headers
   end
