@@ -35,7 +35,7 @@ defmodule Mailbag.Maildir do
 
   """
   def all(maildir_path) do
-    unless is_maildir?(maildir_path), do: raise "Not a maildir"
+    unless is_maildir?(maildir_path), do: raise "Not a maildir: #{maildir_path}"
 
     {:ok, new_emails} = File.ls(Path.join(maildir_path, "new"))
     {:ok, cur_emails} = File.ls(Path.join(maildir_path, "cur"))
