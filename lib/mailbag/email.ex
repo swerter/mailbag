@@ -62,8 +62,7 @@ defmodule Mailbag.Email do
     command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
     %{out: email_text, status: 1} = Porcelain.exec command, [path]
     IO.inspect email_text
-    {res, []} = Code.eval_string(email_text)
-    res
+    email_text
   end
 
 
