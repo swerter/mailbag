@@ -30,7 +30,7 @@ defmodule Mailbag.Maildir do
   @doc """
   Extract a list of all emails in a maildir folder, including 'cur', and 'new'.
   ## Example
-      iex> emails = Mailbag.Maildir.all("test/data/INBOX") |> Enum.count
+      iex> emails = Mailbag.Maildir.all("test/data/test.com/aaa/INBOX") |> Enum.count
       4
 
   """
@@ -38,12 +38,18 @@ defmodule Mailbag.Maildir do
     unless is_maildir?(maildir_path), do: raise "Not a maildir"
 
     {:ok, new_emails} = File.ls(Path.join(maildir_path, "new"))
-    {:ok, current_emails} = File.ls(Path.join(maildir_path, "cur"))
+    {:ok, cur_emails} = File.ls(Path.join(maildir_path, "cur"))
 
-    new_email_headers = Mailbag.Email.extract_gmime_headers(Path.join(maildir_path, "new"))
-    cur_email_headers = Mailbag.Email.extract_gmime_headers(Path.join(maildir_path, "new"))
+    new_emails = Enum.map(new_emails, fn(x) -> maildir_path |> Path.join("new") |> Path.join(x) end)
+    cur_emails = Enum.map(cur_emails, fn(x) -> maildir_path |> Path.join("cur") |> Path.join(x) end)
 
-    Map.merge(new_email_headers, cur_email_headers)
+    new_email_headers = Mailbag.Email.extract_gmime_headers(new_emails)
+    cur_email_headers = Mailbag.Email.extract_gmime_headers(cur_emails)
+
+    if Enum.count(new_emails) == 1, do: new_email_headers = [new_email_headers]
+    if Enum.count(cur_emails) == 1, do: cur_email_headers = [cur_email_headers]
+
+    new_email_headers ++ cur_email_headers
   end
 
 

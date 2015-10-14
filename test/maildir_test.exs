@@ -4,23 +4,24 @@ defmodule Maildir.MaildirTests do
 
 
   test "list all emails in a maildir and check subjects" do
-    maildir_path = "test/data/INBOX"
+    maildir_path = __DIR__ |> Path.join("..") |> Path.join("test/data/test.com/aaa/INBOX/") |> Path.expand
     emails = Mailbag.Maildir.all(maildir_path)
     subjects = Enum.map(emails, &(&1.subject))
     assert Enum.any?(subjects, &(String.match?(&1,~r/15% Rabatt auf Flyer & Falzflyer/)))
   end
 
   test "list all emails in a maildir and check subjects (with encoding)" do
-    maildir_path = "test/data/INBOX"
+    maildir_path = __DIR__ |> Path.join("..") |> Path.join("test/data/test.com/aaa/INBOX/") |> Path.expand
     emails = Mailbag.Maildir.all(maildir_path)
     subjects = Enum.map(emails, &(&1.subject))
     assert Enum.any?(subjects, &(String.match?(&1,~r/¿TE IMAGINAS ENVIOS EN 24 HORAS?/)))
   end
 
   test "list all emails in a maildir " do
-    maildir_path = "/home/michael/Maildir/migadu.ch/mjb/INBOX"
+    maildir_path = __DIR__ |> Path.join("..") |> Path.join("test/data/test.com/aaa/INBOX/") |> Path.expand
     emails = Mailbag.Maildir.all(maildir_path)
   end
+
 
   test "mailbox_path " do
     base_path = "/aaa/bbb/"
