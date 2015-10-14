@@ -57,7 +57,7 @@ defmodule Mailbag.Email do
 
   """
   def extract_gmime_text(path) do
-    command = Path.dirname(__ENV__.file) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
+    command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
     %{out: email_text, status: 1} = Porcelain.exec command, [path]
     {res, []} = Code.eval_string(email_text)
     res
@@ -75,7 +75,7 @@ defmodule Mailbag.Email do
 
   """
   def extract_gmime_body_structure(path) do
-    command = Path.dirname(__ENV__.file) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_structure") |> Path.expand
+    command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_structure") |> Path.expand
     %{out: email_structure, status: 1} = Porcelain.exec command, [path]
     {res, []} = Code.eval_string(email_structure)
     res
@@ -97,8 +97,9 @@ defmodule Mailbag.Email do
 
   """
   def extract_gmime_headers(path) do
-    command = Path.dirname(__ENV__.file) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_headers") |> Path.expand
+    command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("..") |> Path.join("priv") |> Path.join("extract_headers") |> Path.expand
     %{out: email_headers, status: 1} = Porcelain.exec command, [path]
+    IO.puts email_headers
     {res, []} = Code.eval_string(email_headers)
     res
   end
