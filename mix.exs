@@ -70,7 +70,7 @@ defmodule Mailbag.Mixfile do
       {:benchfella, "~> 0.2", only: :dev},
       {:dialyze, "~> 0.2", only: :dev},
       {:inch_ex, "== 0.3.3", only: :docs},
-      {:porcelain, "~> 2.0"}
+      # {:porcelain, "~> 2.0"}
     ]
   end
 end
