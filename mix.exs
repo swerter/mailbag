@@ -44,7 +44,7 @@ defmodule Mailbag.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :tzdata, :porcelain]]
+    [applications: [:logger, :tzdata]] #, :porcelain
   end
 
   defp package do
