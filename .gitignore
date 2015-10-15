@@ -3,7 +3,4 @@
 /deps
 erl_crash.dump
 *.ez
-/priv/Elixir.Iconv_nif.so
-/priv/extract_headers
-/priv/extract_structure
-/priv/extract_text
+/priv
