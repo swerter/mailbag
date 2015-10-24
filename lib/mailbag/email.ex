@@ -62,7 +62,7 @@ defmodule Mailbag.Email do
     command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_text") |> Path.expand
     # %{out: email_text, status: 1} = Porcelain.exec command, [path]
     unless is_list(path), do: path = [path]
-    {email_text, 1} = System.cmd command, path
+    {email_text, 0} = System.cmd command, path
     email_text
   end
 
@@ -79,7 +79,7 @@ defmodule Mailbag.Email do
     command = Path.dirname(__DIR__) |> Path.join("..") |> Path.join("priv") |> Path.join("extract_structure") |> Path.expand
     # %{out: email_structure, status: 1} = Porcelain.exec command, [path]
     unless is_list(path), do: path = [path]
-    {email_structure, 1} = System.cmd command, path
+    {email_structure, 0} = System.cmd command, path
     {res, []} = Code.eval_string(email_structure)
     res
   end
