@@ -101,7 +101,7 @@ defmodule Mailbag.Email do
     command = Path.dirname(__DIR__)  |> Path.join("..") |> Path.join("priv") |> Path.join("extract_headers") |> Path.expand
     # %{out: email_headers, status: 1} = Porcelain.exec command, [path]
     unless is_list(path), do: path = [path]
-    {email_headers, 1} = System.cmd command, path
+    {email_headers, 0} = System.cmd command, path
     {res, []} = Code.eval_string(email_headers)
     res
   end
