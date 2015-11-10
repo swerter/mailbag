@@ -76,9 +76,9 @@ void extract_addresses(InternetAddressList *address_list, GMimeStream *out_strea
   }
 }
 
-void has_attachment(GMimePart *part, GMimeStream *out_stream) {
+static gboolean has_attachment(GMimePart *part, GMimeStream *out_stream, gboolean has_attach) {
   if (GMIME_IS_MESSAGE_PART (part)) {
-    has_attachment(part, out_stream);
+    has_attachment(part, out_stream, has_attach);
   } else if (GMIME_IS_MULTIPART (part)) {
     int nr_parts;
     int i;
@@ -86,7 +86,7 @@ void has_attachment(GMimePart *part, GMimeStream *out_stream) {
     for(i=0; i<nr_parts; i++) {
       GMimeObject *subpart;
       subpart = g_mime_multipart_get_part((GMimeMultipart *) part, i);
-      has_attachment((GMimePart *) subpart, out_stream);
+      has_attachment((GMimePart *) subpart, out_stream, has_attach);
     }
   } else if (GMIME_IS_PART (part)) {
     /* /\* a normal leaf part, could be text/plain or */
@@ -100,9 +100,10 @@ void has_attachment(GMimePart *part, GMimeStream *out_stream) {
     /*   } */
     }
     else {
-      g_mime_stream_printf (out_stream, ", has_attachment: true");
+      has_attach = TRUE;
     }
   }
+  return has_attach;
 }
 
 void extract_headers (GMimeMessage *message, GMimeStream *out_stream) {
@@ -182,7 +183,11 @@ test_stream (GMimeStream *stream, GMimeStream *out_stream)
   GMimeObject *mime_part;
   mime_part = g_mime_message_get_mime_part(msg);
   if (g_mime_content_type_is_type(g_mime_object_get_content_type(mime_part), "multipart", "*")) {
-    has_attachment((GMimePart *) mime_part, out_stream);
+    if (has_attachment((GMimePart *) mime_part, out_stream, FALSE) == TRUE) {
+      g_mime_stream_printf (out_stream, ", has_attachment: true");
+    } else {
+      g_mime_stream_printf (out_stream, ", has_attachment: false");
+    };
   } else {
     g_mime_stream_printf (out_stream, ", has_attachment: false");
   }
