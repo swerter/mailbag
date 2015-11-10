@@ -76,6 +76,35 @@ void extract_addresses(InternetAddressList *address_list, GMimeStream *out_strea
   }
 }
 
+void has_attachment(GMimePart *part, GMimeStream *out_stream) {
+  if (GMIME_IS_MESSAGE_PART (part)) {
+    has_attachment(part, out_stream);
+  } else if (GMIME_IS_MULTIPART (part)) {
+    int nr_parts;
+    int i;
+    nr_parts = g_mime_multipart_get_count ((GMimeMultipart *) part);
+    for(i=0; i<nr_parts; i++) {
+      GMimeObject *subpart;
+      subpart = g_mime_multipart_get_part((GMimeMultipart *) part, i);
+      has_attachment((GMimePart *) subpart, out_stream);
+    }
+  } else if (GMIME_IS_PART (part)) {
+    /* /\* a normal leaf part, could be text/plain or */
+    /*  * image/jpeg etc *\/ */
+    if (g_mime_content_type_is_type(g_mime_object_get_content_type((GMimeObject *) part), "text", "*")) {
+    /*   if (g_mime_content_type_is_type(g_mime_object_get_content_type((GMimeObject *) part), "text", "plain")) { */
+    /*     g_mime_stream_printf (out_stream, "%%{type: \"plain\"}"); */
+    /*   } */
+    /*   if (g_mime_content_type_is_type(g_mime_object_get_content_type((GMimeObject *) part), "text", "html")) { */
+    /*     g_mime_stream_printf (out_stream, "%%{type: \"html\"}"); */
+    /*   } */
+    }
+    else {
+      g_mime_stream_printf (out_stream, ", has_attachment: true");
+    }
+  }
+}
+
 void extract_headers (GMimeMessage *message, GMimeStream *out_stream) {
   const char *subject;
   char *escaped_subject;
@@ -150,6 +179,14 @@ test_stream (GMimeStream *stream, GMimeStream *out_stream)
 
   extract_headers(msg, out_stream);
 
+  GMimeObject *mime_part;
+  mime_part = g_mime_message_get_mime_part(msg);
+  if (g_mime_content_type_is_type(g_mime_object_get_content_type(mime_part), "multipart", "*")) {
+    has_attachment((GMimePart *) mime_part, out_stream);
+  } else {
+    g_mime_stream_printf (out_stream, ", has_attachment: false");
+  }
+
  leave:
   if (parser)
     g_object_unref (parser);
@@ -164,7 +201,7 @@ test_stream (GMimeStream *stream, GMimeStream *out_stream)
 
 
 
-int extract_flags(const char *filename, GMimeStream *out_stream) {
+void extract_flags(const char *filename, GMimeStream *out_stream) {
   char* flags;
   char* string;
   char* tofree;
@@ -216,7 +253,6 @@ int extract_flags(const char *filename, GMimeStream *out_stream) {
 
     free(tofree);
   }
-  return 1;
 }
 
 
