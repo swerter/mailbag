@@ -78,7 +78,7 @@ void extract_addresses(InternetAddressList *address_list, GMimeStream *out_strea
 
 static gboolean has_attachment(GMimePart *part, GMimeStream *out_stream, gboolean has_attach) {
   if (GMIME_IS_MESSAGE_PART (part)) {
-    has_attachment(part, out_stream, has_attach);
+    has_attach = has_attachment(part, out_stream, has_attach);
   } else if (GMIME_IS_MULTIPART (part)) {
     int nr_parts;
     int i;
@@ -86,7 +86,7 @@ static gboolean has_attachment(GMimePart *part, GMimeStream *out_stream, gboolea
     for(i=0; i<nr_parts; i++) {
       GMimeObject *subpart;
       subpart = g_mime_multipart_get_part((GMimeMultipart *) part, i);
-      has_attachment((GMimePart *) subpart, out_stream, has_attach);
+      has_attach = has_attachment((GMimePart *) subpart, out_stream, has_attach);
     }
   } else if (GMIME_IS_PART (part)) {
     /* /\* a normal leaf part, could be text/plain or */
