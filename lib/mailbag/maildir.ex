@@ -62,8 +62,8 @@ defmodule Mailbag.Maildir do
       :date_inv -> Enum.sort(emails, &(&1.sort_date > &2.sort_date))
       :subject -> Enum.sort(emails, &(&1.subject < &2.subject))
       :subject_inv -> Enum.sort(emails, &(&1.subject > &2.subject))
-      :sender -> Enum.sort(emails, &(&1.subject < &2.subject))
-      :sender_inv -> Enum.sort(emails, &(&1.subject > &2.subject))
+      :sender -> Enum.sort(emails, &(&1.sender < &2.sender))
+      :sender_inv -> Enum.sort(emails, &(&1.sender > &2.sender))
     end
   end
 

@@ -1,5 +1,5 @@
 /* gmime-test; compile with:
-   gcc -o extract_structure extract_structure.c -Wall -O0 -ggdb3 \
+   gcc -o extract_structure extract_headers.c -Wall -O0 -ggdb3 \
    `pkg-config --cflags --libs gmime-2.6`
 */
 #include <gmime/gmime.h>
@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <string.h>
 #include <locale.h>
+#include <string.h>
 
 /* Replace parts of a string with another */
 /* taken from http://stackoverflow.com/questions/779875/what-is-the-function-to-replace-string-in-c */
@@ -163,6 +164,62 @@ test_stream (GMimeStream *stream, GMimeStream *out_stream)
 
 
 
+int extract_flags(const char *filename, GMimeStream *out_stream) {
+  char* flags;
+  char* string;
+  char* tofree;
+
+  string = strdup(filename);
+
+  if (string != NULL) {
+
+    tofree = string;
+
+    if(strstr(filename, "new") != NULL) {
+      g_mime_stream_printf (out_stream, "new: true, ");
+    } else {
+      g_mime_stream_printf (out_stream, "new: false, ");
+    }
+
+    strsep(&string, ":");
+    flags = strsep(&string, ":");
+    if(strstr(flags, "D") != NULL) {
+      g_mime_stream_printf (out_stream, "draft: true, ");
+    } else {
+      g_mime_stream_printf (out_stream, "draft: false, ");
+    }
+    if(strstr(flags, "F") != NULL) {
+      g_mime_stream_printf (out_stream, "flagged: true, ");
+    } else {
+      g_mime_stream_printf (out_stream, "flagged: false, ");
+    }
+    if(strstr(flags, "P") != NULL) {
+      g_mime_stream_printf (out_stream, "passed: true, ");
+    } else {
+      g_mime_stream_printf (out_stream, "passed: false, ");
+    }
+    if(strstr(flags, "R") != NULL) {
+      g_mime_stream_printf (out_stream, "replied: true, ");
+    } else {
+      g_mime_stream_printf (out_stream, "replied: false, ");
+    }
+    if(strstr(flags, "S") != NULL) {
+      g_mime_stream_printf (out_stream, "seen: true, ");
+    } else {
+      g_mime_stream_printf (out_stream, "seen: false, ");
+    }
+    if(strstr(flags, "T") != NULL) {
+      g_mime_stream_printf (out_stream, "trashed: true, ");
+    } else {
+      g_mime_stream_printf (out_stream, "trashed: false, ");
+    }
+
+    free(tofree);
+  }
+  return 1;
+}
+
+
 static gboolean
 test_file (const char *path, GMimeStream *out_stream)
 {
@@ -173,6 +230,7 @@ test_file (const char *path, GMimeStream *out_stream)
   stream = NULL;
   file   = NULL;
 
+  extract_flags(path, out_stream);
   file = fopen (path, "r");
   if (!file) {
     g_warning ("cannot open file '%s': %s", path,
